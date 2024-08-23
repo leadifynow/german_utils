@@ -30,71 +30,56 @@ def read_csv(filename):
     print(f"Data read successfully from CSV file: {filename}")
     return data
 
-# Function to check if a contact exists in the database
-def contact_exists(firstName, lastName):
+# Function to fetch all unique emails from the contacts table
+def fetch_unique_emails():
     conn = connect_to_database()
     if conn:
         try:
             with conn.cursor() as cursor:
-                print(f"Checking if contact with first name '{firstName}' and last name '{lastName}' exists in the database...")
-                # Check if contact exists in the contacts table
-                cursor.execute("SELECT * FROM contacts WHERE firstName = %s AND lastName = %s", (firstName, lastName))
-                result = cursor.fetchone()
-                if result:
-                    print("Contact found in the database.")
-                else:
-                    print("Contact not found in the database.")
-                return result
+                print("Fetching unique emails from the database...")
+                cursor.execute("SELECT DISTINCT email FROM contacts")
+                result = cursor.fetchall()
+                unique_emails = [row[0] for row in result]  # Extract emails from the result
+                return unique_emails
         except pymysql.Error as e:
-            print(f"Error checking contact in database: {e}")
+            print(f"Error fetching emails from database: {e}")
         finally:
             # Close the database connection
             conn.close()
             print("Closed database connection.")
-    return None
-
-# Function to parse full name into first name and last name
-def parse_full_name(full_name):
-    parts = full_name.split()
-    if len(parts) > 1:
-        return parts[0], ' '.join(parts[1:])
-    else:
-        return parts[0], ''
+    return []
 
 # Main function
 def main():
     # Provide the path to your CSV file
-    csv_filename = "D:/malej/Downloads/UnMatched - Sheet2.csv"
+    csv_filename = "D:/malej/Downloads/Financial_Services_August.valids_Cleansed.csv"
     
     # Read data from the CSV file
     data = read_csv(csv_filename)
     
-    # New data list to store matched data
-    matched_data = []
+    # Fetch unique emails from the database
+    unique_emails = fetch_unique_emails()
+    
+    # New data list to store unmatched data
+    unmatched_data = []
     
     # Process each row from the CSV file
     for row in data:
-        # Parse full name from the 'Name' column
-        first_name, last_name = parse_full_name(row['Name'])
-        
-        # Check if the contact exists in the database
-        contact = contact_exists(first_name, last_name)
-        
-        # If match found, add to matched data list
-        if contact:
-            matched_data.append({**row, **contact})  # Combine CSV and database data
+        # Check if the email exists in the unique emails from the database
+        if row['Email'] not in unique_emails:
+            unmatched_data.append(row)
     
-    # Write matched data to a new CSV file
-    matched_filename = "D:/malej/Documents/CSVMatches/matched.csv"
-    with open(matched_filename, 'w', newline='', encoding='utf-8') as file:
-        if matched_data:  # Check if matched_data is not empty
-            writer = csv.DictWriter(file, fieldnames=matched_data[0].keys())
+    # Write unmatched data to a new CSV file
+    unmatched_filename = "D:/malej/Documents/CSVMatches/Financial_Services_August.valids_Cleansed_noduplcicates.csv"
+    with open(unmatched_filename, 'w', newline='', encoding='utf-8') as file:
+        if unmatched_data:  # Check if unmatched_data is not empty
+            writer = csv.DictWriter(file, fieldnames=unmatched_data[0].keys())
             writer.writeheader()  # Write header row
-            writer.writerows(matched_data)  # Write data rows
-            print("New CSV file created with matched data.")
-            print(f"File path: {matched_filename}")
+            writer.writerows(unmatched_data)  # Write data rows
+            print("New CSV file created with unmatched data.")
+            print(f"File path: {unmatched_filename}")
         else:
-            print("No matches found. No CSV file created.")
+            print("All emails matched. No unmatched data to write to CSV.")
 
 if __name__ == "__main__":
     main()

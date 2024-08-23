@@ -53,7 +53,7 @@ def read_csv(filename):
 # Main function
 def main():
     # Provide the path to your CSV file
-    csv_filename = r"D:\malej\Downloads\Completed No reply 2 april 15.csv"  # Use raw string literal
+    csv_filename = r"D:\malej\Downloads\Do not contact -  Lauren June - Do not contact -  Lauren June.csv"  # Use raw string literal
     # Alternatively, you can use forward slashes
     # csv_filename = "D:/malej/Downloads/Not Interested.csv"
     data = read_csv(csv_filename)
